@@ -130,3 +130,67 @@ Colección opiniones
 ...
 
 ### Patrón many-to-many
+
+Dependerá de cada caso, pero como aproximación podemos tener en cuenta lo siguiente:
+
+Modelo denormalizado, siempre que se pueda, si se cumple:
+- Mayor número de consultas se da en el lado con el mayor número de registros
+- Podemos permitir redundancia de datos
+
+Por ejemplo productos y tiendas
+
+{
+    sku: 'hjs12',
+    producto: "Zapatillas ZXV",
+    marca: "Nike",
+    ...,
+    tiendas: [
+        {nombre: "Alcorcón Store", calle: "", supervisor: "John Doe",...},
+        {nombre: "Las Rozas Store", calle: "", ...}
+    ]
+}
+
+...
+
+
+{
+    sku: 'hjs13',
+    producto: "Camiseta ZXV",
+    marca: "Adidas",
+    ...,
+    tiendas: [
+        {nombre: "Alcorcón Store", calle: "", supervisor: "John Doe",...},
+    ]
+}
+
+Modelo normalizado, cuando no quede más remedio, y cuando:
+- Las consultas se produzcan con la misma frecuencia en un lado u otro de la relación.
+- La redundacia provoque demasiada complejidad.
+
+En el caso anterior:
+
+Colección Productos
+
+{
+    sku: 'hjs12',
+    producto: "Zapatillas ZXV",
+    marca: "Nike",
+    ...,
+    tiendas: ['dhkdjhk','gcsjg565']
+}
+
+...
+
+
+{
+    sku: 'hjs13',
+    producto: "Camiseta ZXV",
+    marca: "Adidas",
+    ...,
+    tiendas: ['dhkdjhk']
+}
+
+Colección tiendas
+
+{_id: 'dhkdjhk', nombre: "Alcorcón Store", calle: "", supervisor: "John Doe",...},
+{_id: 'gcsjg565'nombre: "Las Rozas Store", calle: "", ...}
