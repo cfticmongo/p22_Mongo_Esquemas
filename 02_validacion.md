@@ -126,3 +126,101 @@ De entrada esta validación no comprueba los campos que no están en el esquema
 ```
 db.pacientes.insert({nombre: "José", apellidos: "López", dni: "3535353T", genero: 'Prefiero no contestar'}) // ok
 ```
+
+Si necesitaramos validación con comprobación de campos no existentes realizaremos el jsonSchema de la siguiente
+manera:
+
+```
+use clinica
+
+db.createCollection("inventario", {
+    validator: {
+        $jsonSchema: {
+            bsonType: "object",
+            additionalProperties: false, // Impide campos no validados
+            required: ["articulo","stock"],
+            properties: {
+                _id: {
+                    bsonType: "objectId" // Añadir para que no de error
+                },
+                articulo: {
+                    bsonType: "string",
+                    description: "debe ser string y obligatorio"
+                },
+                stock: {
+                    bsonType: "number",
+                    description: "debe ser number y obligatorio"
+                },
+                descripcion: {
+                    bsonType: "string",
+                    description: "debe ser string"
+                }
+            }
+        }
+    }
+})
+
+db.inventario.insertOne({articulo: 'J23', stock: 20, descripcion: 'Lorem ipsum...'}) // OK
+{ acknowledged: true,
+  insertedId: ObjectId("618582e4b774d0e727f42101") }
+
+db.inventario.insertOne({articulo: 'J23', stock: 20, descripcion: 'Lorem ipsum...', precio: 40}) // Error porque el campo precio /// no está en la validación
+MongoServerError: Document failed validation
+
+```
+
+## Validación sobre colecciones existentes
+
+- Sintacticamente se utiliza runCommand y la propiedad collMod
+- Se establece un nivel de validación, que determina si los documentos existentes deben cumplir o no
+la nueva validación.
+
+```
+use clinica2
+
+db.empleados.insertMany([
+    {nombre: "Juan", apellidos: "Rodríguez"},
+    {nombre: "Sara", apellidos: "López"},
+    {nombre: "Laura"},
+])
+
+
+db.runCommand({
+    collMod: "empleados", 
+    validator: {
+        $jsonSchema: {
+            bsonType: "object",
+            required: ["nombre","apellidos"],
+            properties: {
+                nombre: {
+                    bsonType: "string",
+                    description: "debe ser string y obligatorio"
+                },
+                apellidos: {
+                    bsonType: "string",
+                    description: "debe ser string y obligatorio"
+                },
+                dni: {
+                    bsonType: "string",
+                    description: "debe ser string"
+                }
+            }
+        }
+    },
+    validationLevel: "moderate"
+})
+```
+
+Opciones de validationLevel
+
+- "strict" (defecto) permite mantener los documentos antiguos que no cumplan la validación hasta que sean
+actualizados
+- "moderate" permite mantener e incluso actualizar los documentos antiguos sin cumplir la validación o lo
+que es lo mismo los documentos antiguos no tendrán que cumplir la validación
+
+```
+db.empleados.updateOne(
+    {nombre: "Laura"},
+    {$set: {nombre: "Laura María"}} // OK con moderate y Error con strict
+)
+```
