@@ -68,3 +68,61 @@ db.createCollection("pacientes", {
 
 
 ```
+
+Comprobamos:
+
+```
+db.pacientes.insert({nombre: "Juan", apellidos: "Gómez"}) // Devolverá error porque le falta dni
+```
+
+ { index: 0,
+             code: 121,
+             errmsg: 'Document failed validation',
+
+
+```
+db.pacientes.insert({nombre: "Juan", apellidos: "Gómez", dni: "46875646T"}) // Ok
+
+db.pacientes.insert({nombre: "Juan", apellidos: "Gómez", dni: 46875646T}) // Error porque dni es string
+
+db.pacientes.insert({
+    nombre: "Raquel", 
+    apellidos: "Gómez", 
+    dni: "53534545T",
+    direccion: {
+        calle: 'Me falta un tornillo, 12',
+        cp: '35653',
+        localidad: "Valladolid" // Error al no estar en el enum
+    }})
+
+db.pacientes.insert({
+    nombre: "Raquel", 
+    apellidos: "Gómez", 
+    dni: "53534545T",
+    direccion: {
+        calle: 'Gran Vía',
+        cp: '28300',
+        localidad: "Alcorcón" // ok
+    }})
+```
+
+```
+db.pacientes.replaceOne( // Nuevo método que sustituye a save-update All credits to Carlos & partners
+    {_id: ObjectId("6185717cb774d0e727f420fe")},
+    {nombre: "Gonzalo", apellidos: "Pérez", dni: "523478587U"} // El documento que actualiza debe cumplir con el schema
+)
+```
+
+Para comprobar la validación disponemos de
+
+```
+db.getCollectionInfos({name: "pacientes"}) // Ojo solo en la shell clásica
+```
+
+
+
+De entrada esta validación no comprueba los campos que no están en el esquema
+
+```
+db.pacientes.insert({nombre: "José", apellidos: "López", dni: "3535353T", genero: 'Prefiero no contestar'}) // ok
+```
